@@ -1,0 +1,38 @@
+'use client'
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { useState, useEffect } from 'react'
+import { Toaster } from 'sonner'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000, // 1 minute
+            gcTime: 10 * 60 * 1000, // 10 minutes
+          },
+        },
+      })
+  )
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      import('../mocks/browser').then(({ worker }) => {
+        worker.start({
+          onUnhandledRequest: 'bypass',
+        })
+      })
+    }
+  }, [])
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <Toaster position="top-right" />
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  )
+}
