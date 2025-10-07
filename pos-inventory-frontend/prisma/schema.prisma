@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(STAFF)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  sku         String?     @unique
+  categoryId  String
+  costPrice   Float
+  sellPrice   Float
+  stock       Int         @default(0)
+  status      ProductStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id])
+  saleItems SaleItem[]
+
+  @@map("products")
+}
+
+model Sale {
+  id          String   @id @default(cuid())
+  totalAmount Float
+  totalCost   Float
+  totalProfit Float
+  soldById    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  soldBy   User       @relation(fields: [soldById], references: [id])
+  saleItems SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  productId String
+  quantity  Int
+  unitPrice Float
+  totalPrice Float
+  unitCost  Float
+  totalCost Float
+  profit    Float
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+}
